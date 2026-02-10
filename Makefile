@@ -12,7 +12,7 @@ CXXFLAGS = -std=c++17 $(shell sdl2-config --cflags)
 LDFLAGS  = $(shell sdl2-config --libs)
 
 TARGET = simple
-SRC = simple.cpp
+SRC = simple.cpp character.cpp
 
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)

@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include "character.h"
 #include <iostream>
 
 using namespace std;
@@ -22,58 +23,46 @@ void cleanup(SDL_Window* &window,SDL_Renderer* &renderer){
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
-int res_width = 640;
-int res_height = 480;
+
+int res_width = 1280;
+int res_height = 720;
 
 int main(int argc, char* args[]) {
-    cout << "Arg 0 " << args[0]<< endl;
-    //cout << "Arg 1 " << args[1]<< endl;
-    SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
-    int retval=init(window,renderer,res_width,res_height);
-    if (retval!=0) return retval;
-    
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Gray color
-    
+    SDL_Window* window = nullptr;
+    SDL_Renderer* renderer = nullptr;
+
+    if (init(window, renderer, res_width, res_height) != 0)
+        return -1;
+
     bool quit = false;
-
     SDL_Event e;
-    int rcount=0;
-    int bcount=0;
-    SDL_Surface* character;
-    character=SDL_LoadBMP("images/characters/burger/burger.bmp");
-    if (character==NULL) return error("Could not read image.bmp file");
-    SDL_Texture* charText;
-    charText=SDL_CreateTextureFromSurface(renderer,character);
-    if(charText==NULL) return error("Failed to create texture");
-    SDL_Rect src; src.x=0; src.y=0; src.w=32; src.h=32;
-    SDL_Rect dst; dst.x=0; dst.y=0; dst.w=src.w; dst.h=src.h;
-    while (!quit) {
-        while (SDL_PollEvent(&e) != 0) {
-            if (e.type == SDL_QUIT)  quit = true;
-            else if (e.type== SDL_KEYDOWN){
-                if (e.key.type== SDL_KEYDOWN) {
-                    SDL_Keycode symbol=e.key.keysym.sym;
-                    if (symbol==SDLK_a) dst.x--;
-                    if (symbol==SDLK_d) dst.x++;
-                    if (symbol==SDLK_w) dst.y--;
-                    if (symbol==SDLK_s) dst.y++;
-                }
-            }
-        }
-        if (dst.x<0) dst.x=res_width-32;
-        if (dst.x>res_width) dst.x=0;
-        if (dst.y<0) dst.y=res_height-32;
-        if (dst.y>res_height) dst.y=0;
 
-        
-        SDL_SetRenderDrawColor(renderer, rcount, 0, bcount, 255); // Gray color
+    Character player(
+        renderer,
+        "images/characters/burger/burger.bmp",
+        0, 0,
+        res_width, res_height
+    );
+
+    while (!quit) {
+        while (SDL_PollEvent(&e)) {
+            if (e.type == SDL_QUIT)
+                quit = true;
+
+            player.handleEvent(e);
+        }
+
+        player.update();
+
+        SDL_SetRenderDrawColor(renderer, 65, 0, 150, 255);
         SDL_RenderClear(renderer);
-        //Update Screen
-        SDL_RenderCopy(renderer, charText, &src, &dst);
+
+        player.render(renderer);
+
         SDL_RenderPresent(renderer);
-        SDL_Delay(1000/240);
+        SDL_Delay(1000 / 240);
     }
-    cleanup(window,renderer);
+
+    cleanup(window, renderer);
     return 0;
 }
