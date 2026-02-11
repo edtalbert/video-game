@@ -1,12 +1,24 @@
-CXX = g++
-CFLAGS = $(shell sdl2-config --cflags)
-LIBS = $(shell sdl2-config --libs)
+# Detect OS
+UNAME_S := $(shell uname -s)
 
-simple: simple.cpp gamestate.cpp menustate.cpp character.cpp
-	$(CXX) simple.cpp gamestate.cpp menustate.cpp character.cpp -o simple $(CFLAGS) $(LIBS)
+# Choose compiler
+ifeq ($(UNAME_S),Darwin)
+    CXX = clang++
+else
+    CXX = g++
+endif
 
-run: simple
-	./simple
+CXXFLAGS = -std=c++17 $(shell sdl2-config --cflags)
+LDFLAGS  = $(shell sdl2-config --libs)
+
+TARGET = simple
+SRC = simple.cpp character.cpp gamestate.cpp menustate.cpp
+
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
+
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
-	rm -f simple
+	rm -f $(TARGET)
