@@ -1,8 +1,11 @@
 #include <SDL.h>
-#include "character.h"
-#include "menustate.h"
 #include <iostream>
 #include <memory>
+
+#include "levelstate.h"
+#include "menustate.h"
+#include "mediaManager.hpp"
+#include "button.hpp"
 
 using namespace std;
 
@@ -11,11 +14,13 @@ int error(string s){
     return -1;
 }
 
-int init(SDL_Window*& window, SDL_Renderer*& renderer, int width, int height){
+int init(SDL_Window*& window, SDL_Renderer*& renderer,
+         int width, int height)
+{
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0)
         return error("SDL could not initialize! SDL_Error: ");
 
-    window = SDL_CreateWindow("Simple SDL2 Example",
+    window = SDL_CreateWindow("SDL Level + Menu Overlay",
                               SDL_WINDOWPOS_CENTERED,
                               SDL_WINDOWPOS_CENTERED,
                               width, height,
@@ -24,7 +29,9 @@ int init(SDL_Window*& window, SDL_Renderer*& renderer, int width, int height){
     if (!window)
         return error("Window could not be created! SDL_Error: ");
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1,
+                                  SDL_RENDERER_ACCELERATED);
+
     if (!renderer)
         return error("Renderer could not be created! SDL_Error: ");
 
@@ -37,12 +44,15 @@ void cleanup(SDL_Window*& window, SDL_Renderer*& renderer){
     SDL_Quit();
 }
 
-int res_width = 1280;
+// global MediaManager (same as before)
+MediaManager mm;
+
+int res_width  = 1280;
 int res_height = 720;
 
 int main(int argc, char* args[]) {
 
-    SDL_Window* window = nullptr;
+    SDL_Window* window    = nullptr;
     SDL_Renderer* renderer = nullptr;
 
     if (init(window, renderer, res_width, res_height) != 0)
@@ -51,91 +61,96 @@ int main(int argc, char* args[]) {
     bool quit = false;
     SDL_Event e;
 
-    // Game State (menu system)
-    std::unique_ptr<GameState> currentState = nullptr;
+    // Gameplay state: always exists
+    std::unique_ptr<LevelState> levelState =
+        std::make_unique<LevelState>(renderer,
+                                     mm,
+                                     res_width,
+                                     res_height);
 
-    // Load title texture
-    SDL_Surface* titleSurface = SDL_LoadBMP("Title.bmp");
-    if (!titleSurface) return error("Could not load Title.bmp: ");
+    // Menu overlay: exists only when open
+    std::unique_ptr<MenuState> menuState = nullptr;
 
+    // 🔹 Load title texture once (for menu header)
+    int titleW = 0;
+    int titleH = 0;
     SDL_Texture* titleTexture =
-        SDL_CreateTextureFromSurface(renderer, titleSurface);
-    SDL_FreeSurface(titleSurface);
-
-    if (!titleTexture)
-        return error("Failed to create title texture: ");
-
-    // Create player
-    Character player(
-        renderer,
-        "images/characters/burger/burger.bmp",
-        0, 0,
-        res_width, res_height
-    );
+        mm.read(renderer, "images/title.bmp", titleW, titleH);
 
     while (!quit) {
 
+        // --- EVENT LOOP ---
         while (SDL_PollEvent(&e)) {
 
-            if (e.type == SDL_QUIT)
+            if (e.type == SDL_QUIT) {
                 quit = true;
+                continue;
+            }
 
             // Toggle menu with M
             if (e.type == SDL_KEYDOWN &&
                 e.key.keysym.sym == SDLK_m)
             {
-                if (!currentState)
-                    currentState = std::make_unique<MenuState>(renderer);
-                else
-                    currentState.reset();
-
-                continue;
+                if (!menuState) {
+                    // open menu overlay
+                    menuState = std::make_unique<MenuState>(renderer);
+                } else {
+                    // close menu overlay
+                    menuState.reset();
+                }
+                continue; // don't forward this event further
             }
 
-            // If menu is open, send input only to menu
-            if (currentState) {
-                currentState->handleEvent(e);
-                continue;
+            // If menu is open, it eats the input
+            if (menuState) {
+                menuState->handleEvent(e);
+            } else {
+                levelState->handleEvent(e);
             }
-
-            // Otherwise send to player
-            player.handleEvent(e);
         }
 
-        // Update
-        if (!currentState)
-            player.update();
+        // --- UPDATE ---
+        if (!menuState) {
+            // game runs only when menu is closed
+            levelState->update(0.016f);
+        } else {
+            // optional: update menu, but not game
+            menuState->update(0.016f);
+        }
 
-        // Render
+        // --- RENDER ---
         SDL_SetRenderDrawColor(renderer, 65, 0, 150, 255);
         SDL_RenderClear(renderer);
 
-        // Render gameplay (player always drawn)
-        player.render(renderer);
+        // Always draw the level first
+        levelState->render(renderer);
 
-        // Render menu on top if open
-        if (currentState) {
-            currentState->update(0.0f);
-            currentState->render(renderer);
+        // If menu is open, draw it on top + title image
+        if (menuState) {
+            // Draw the menu overlay (panel, etc.)
+            menuState->render(renderer);
 
-            // Draw title centered at top
-            int tw, th;
-            SDL_QueryTexture(titleTexture, NULL, NULL, &tw, &th);
+            // 🔹 Draw the title centered at the top of the screen
+            if (titleTexture) {
+                SDL_Rect dst;
+                dst.w = titleW;
+                dst.h = titleH;
+                dst.x = (res_width - titleW) / 2;
+                dst.y = 20;   // distance from top
 
-            SDL_Rect dst;
-            dst.w = tw;
-            dst.h = th;
-            dst.x = (res_width - tw) / 2;
-            dst.y = 20;
+                SDL_RenderCopy(renderer, titleTexture, nullptr, &dst);
 
-            SDL_RenderCopy(renderer, titleTexture, NULL, &dst);
+                
+            }
+
+            Button button1(renderer, mm, "images/characters/burger/burger.bmp", 0, 0, 32, 32 );
+            SDL_RenderCopy(renderer, button1.buttonText, nullptr, &button1.rect);
         }
 
         SDL_RenderPresent(renderer);
-        SDL_Delay(1000 / 240);
+        SDL_Delay(16); // ~60 FPS
     }
 
-    SDL_DestroyTexture(titleTexture);
     cleanup(window, renderer);
     return 0;
 }
