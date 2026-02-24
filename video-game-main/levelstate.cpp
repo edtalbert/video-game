@@ -12,7 +12,8 @@ LevelState::LevelState(SDL_Renderer* r,
              "images/characters/burger/burger.bmp",
              w / 2,
              h / 2,
-             w, h)
+             w, h),
+      tileMap(r, mm, "images/tiles/tileset.bmp", 32, 32)
 {
     cameraX = 0;
     cameraY = 0;
@@ -27,16 +28,26 @@ void LevelState::update(float deltaTime) {
     player.update();
 
     // Center camera on player
-    cameraX = player.getWorldX() - screenWidth / 2;
+    cameraX = player.getWorldX() - screenWidth  / 2;
     cameraY = player.getWorldY() - screenHeight / 2;
+
+    // Optional: clamp camera so you don’t scroll past edge of map
+    int maxCamX = tileMap.getWidthInTiles()  * tileMap.getTileSize() - screenWidth;
+    int maxCamY = tileMap.getHeightInTiles() * tileMap.getTileSize() - screenHeight;
+
+    if (cameraX < 0) cameraX = 0;
+    if (cameraY < 0) cameraY = 0;
+
+    if (cameraX > maxCamX) cameraX = maxCamX;
+    if (cameraY > maxCamY) cameraY = maxCamY;
 }
 
 void LevelState::render(SDL_Renderer* renderer) {
 
-    // Example background (large world)
-    SDL_SetRenderDrawColor(renderer, 30, 30, 30, 255);
-    SDL_Rect worldRect = { -cameraX, -cameraY, 2000, 2000 };
-    SDL_RenderFillRect(renderer, &worldRect);
+    // 1) Draw the tilemap (big textured world)
+    tileMap.render(renderer, cameraX, cameraY,
+                   screenWidth, screenHeight);
 
-    player.render(renderer, cameraX, cameraY);
+    // 2) Draw the player on top
+    player.render(renderer);
 }

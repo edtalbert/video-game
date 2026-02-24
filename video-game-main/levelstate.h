@@ -1,7 +1,9 @@
 #pragma once
+
 #include "gamestate.h"
 #include "character.h"
 #include "mediaManager.hpp"
+#include "tilemap.h"
 
 class LevelState : public GameState {
 public:
@@ -19,6 +21,7 @@ private:
     MediaManager& media;
 
     Character player;
+    TileMap    tileMap;
 
     int screenWidth;
     int screenHeight;

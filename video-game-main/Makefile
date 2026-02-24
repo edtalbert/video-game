@@ -22,7 +22,7 @@ CXXFLAGS = -std=c++17 -g $(shell sdl2-config --cflags)
 LDFLAGS  = $(shell sdl2-config --libs)
 
 TARGET = simple
-SRC = simple.cpp character.cpp gamestate.cpp menustate.cpp levelstate.cpp
+SRC = simple.cpp character.cpp gamestate.cpp menustate.cpp levelstate.cpp tilemap.cpp
 
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)

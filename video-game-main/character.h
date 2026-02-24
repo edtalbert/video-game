@@ -11,6 +11,8 @@ private:
     int worldX, worldY;    // position in world space
 
     int screenW, screenH;  // screen dimensions
+    int spriteW = 128;
+    int spriteH = 128;
 
 public:
     Character(SDL_Renderer* renderer, MediaManager& mm,
@@ -21,14 +23,10 @@ public:
     void handleEvent(const SDL_Event& e);
     void update();
 
-    // NEW: render now uses camera offset
-    void render(SDL_Renderer* renderer,
-                int cameraX,
-                int cameraY);
+    void render(SDL_Renderer* renderer);
 
     void stats();
 
-    // Needed for camera centering
     int getWorldX() const { return worldX; }
     int getWorldY() const { return worldY; }
 };
