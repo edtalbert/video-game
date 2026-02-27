@@ -18,7 +18,7 @@ int error(string s){
 MediaManager mm;
 
 int main(int argc, char* args[]) {
-    cout <<"Karl was here"<<endl;
+    cout <<"game starting..."<<endl;
     MyGame m;
     m.run();
     return 0;
