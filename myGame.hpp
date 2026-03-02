@@ -1,7 +1,11 @@
+ 
 #pragma once
 
 #include "character.hpp"
 #include "tileMap.hpp"
+#include "button.hpp"
+#include "mouse.hpp"
+#include <vector>
 
 const int WIDTH=1280;
 const int HEIGHT=720;
@@ -18,7 +22,15 @@ class MyGame:public Game{
     int worldH;
     bool menuOpen;
     int selectedIndex;
-
+    std::vector<Button*> buttons;
+       void handleEvent(const SDL_Event& e) override {
+        if (menuOpen && (e.type == SDL_MOUSEBUTTONDOWN || e.type == SDL_MOUSEMOTION)) {
+            for (size_t i = 0; i < buttons.size(); ++i) {
+                buttons[i]->update(*mouse);
+                buttons[i]->handleEvent(e);
+            }
+        }
+    }
     void setup() override {
         tileMap = new TileMap(renderer, mm, "images/tiles/tileset.bmp", 32, 32);
         worldW = tileMap->getWidthInTiles() * tileMap->getTileSize();
@@ -28,10 +40,25 @@ class MyGame:public Game{
                                "images/characters/burger/burger.bmp",
                                worldW / 2, worldH / 2, WIDTH, HEIGHT);
         titleTexture = mm.read(renderer, "images/Title.bmp", titleW, titleH);
+        
+        //buttons get created here
+        buttons.push_back(new Button(renderer, mm, "images/characters/burger/burger.bmp", 100, 100, 32, 32, 
+            //this is the lambda that is being passed as callback
+            //lambda is used so that every button has fully unique "function"
+            //what's in brackets is what's being captured, [this] means that the current object (myGame object) is being captured
+            [this](){
+                    //callback function for button
+                    menuOpen = false;
+                }));
+        buttons.push_back(new Button(renderer, mm, "images/characters/burger/burger.bmp", 100, 150, 32, 32));
+
     }
 
     void update(float dt) override {
+        mouse->update();
         if (menuOpen) return;
+
+        
 
         const Uint8* keys = SDL_GetKeyboardState(nullptr);
         int moveStep = static_cast<int>(400.0f * dt);
@@ -87,6 +114,13 @@ class MyGame:public Game{
     }
 
     void draw() override {
+
+        if (menuOpen) {
+            SDL_ShowCursor(false);
+        } else {
+            SDL_ShowCursor(true);
+        }
+
         SDL_SetRenderDrawColor(renderer, 65, 0, 150, 255);
         SDL_RenderClear(renderer);
 
@@ -111,6 +145,10 @@ class MyGame:public Game{
             dst.y = 20;
             SDL_RenderCopy(renderer, titleTexture, nullptr, &dst);
         }
+        for (size_t i = 0; i < buttons.size(); ++i) {
+            buttons[i]->render(renderer);
+        }
+        mouse->draw(renderer);
     }
 
     public:
@@ -122,13 +160,17 @@ class MyGame:public Game{
         titleH = 0;
         cameraX = 0;
         cameraY = 0;
-        menuOpen = false;
+        menuOpen = true;
         selectedIndex = 0;
         worldW = 0;
         worldH = 0;
+        
     }
     ~MyGame() override {
         delete player;
         delete tileMap;
+        for (size_t i = 0; i < buttons.size(); ++i) {
+            delete buttons[i];
+        }
     }
 };

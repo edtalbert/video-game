@@ -2,7 +2,11 @@
 
 #include <SDL.h>
 #include <iostream>
+
 #include <string>
+#include "button.hpp"
+#include "mouse.hpp"
+
 
 using namespace std;
 
@@ -10,12 +14,14 @@ class Game{
     SDL_Window* window;
     bool quit;
     
+
     int init(int width,int height,string windowTitle){
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) throw "SDL could not initialize! SDL_Error: "; 
         window = SDL_CreateWindow(windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
         if (window == NULL) throw "Window could not be created! SDL_Error:";
         renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
         if (renderer == NULL) throw "Renderer could not be created! SDL_Error:";
+        mouse = new Mouse(renderer, "images/mouse.bmp", mm); // initialize mouse
         return 0;
     }
 
@@ -25,7 +31,9 @@ class Game{
     virtual void update(float dt)=0;
     virtual void keyHandler(SDL_Keycode symbol)=0;
     virtual void draw()=0;
+    virtual void handleEvent(const SDL_Event&) {}
     SDL_Renderer* renderer;
+    Mouse* mouse; // Mouse pointer as member variable
     string windowTitle;
     int width,height;
     void gameOver(){quit=true;}
@@ -56,6 +64,7 @@ class Game{
                     else if (e.type== SDL_KEYDOWN){
                         if (e.key.type== SDL_KEYDOWN) keyHandler(e.key.keysym.sym);
                     }
+                    handleEvent(e);
                 }
                 draw();
                 SDL_RenderPresent(renderer);
@@ -67,9 +76,10 @@ class Game{
             cerr << err << endl; 
         }
     }
-    virtual ~Game(){
-      SDL_DestroyRenderer(renderer);
-      SDL_DestroyWindow(window);
-      SDL_Quit();
-    }
+        virtual ~Game(){
+            if (mouse) delete mouse;
+            SDL_DestroyRenderer(renderer);
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+        }
 };

@@ -24,7 +24,11 @@ LDFLAGS  = $(shell sdl2-config --libs)
 TARGET = simple
 SRC = simple.cpp
 
-$(TARGET): $(SRC)
+
+# Add header dependencies
+DEPS = button.hpp mouse.hpp
+
+$(TARGET): $(SRC) $(DEPS)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
 
 run: $(TARGET)
