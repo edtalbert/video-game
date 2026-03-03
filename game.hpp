@@ -12,7 +12,7 @@ using namespace std;
 
 class Game{
     SDL_Window* window;
-    bool quit;
+    
     
 
     int init(int width,int height,string windowTitle){
@@ -26,6 +26,7 @@ class Game{
     }
 
     protected:
+    bool quit;
     /* Your game must implement these 4 functions to work properly */
     virtual void setup()=0;
     virtual void update(float dt)=0;

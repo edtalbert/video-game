@@ -9,19 +9,29 @@ using namespace std;
 class MediaManager{
     map<string,SDL_Texture *> images;
     public:
-    SDL_Texture* read(SDL_Renderer *renderer,string fname,int &w,int &h){
-        if (images.find(fname)==images.end()){
-          SDL_Surface* character=SDL_LoadBMP(fname.c_str());
-          if (character==NULL) throw "Could not read image.bmp file";
-          SDL_SetColorKey(character,SDL_TRUE,SDL_MapRGB(character->format,0,0,0));
-          SDL_Texture* charText=SDL_CreateTextureFromSurface(renderer,character);
-          SDL_FreeSurface(character);
-          if(charText==NULL) throw "Failed to create texture";
-          images[fname]=charText;
-        }
-        SDL_Texture *result=images[fname];
-        SDL_QueryTexture(result,NULL,NULL,&w,&h);
-        return result;
+        SDL_Texture* read(SDL_Renderer *renderer,string fname,int &w,int &h){
+                std::cout << "MediaManager::read: Attempting to load " << fname << std::endl;
+                if (images.find(fname)==images.end()){
+                    SDL_Surface* character=SDL_LoadBMP(fname.c_str());
+                    if (character==NULL) {
+                        std::cerr << "MediaManager::read: Could not read " << fname << std::endl;
+                        throw "Could not read image.bmp file";
+                    }
+                    SDL_SetColorKey(character,SDL_TRUE,SDL_MapRGB(character->format,255,0,255));
+                    SDL_Texture* charText=SDL_CreateTextureFromSurface(renderer,character);
+                    SDL_FreeSurface(character);
+                    if(charText==NULL) {
+                        std::cerr << "MediaManager::read: Failed to create texture for " << fname << std::endl;
+                        throw "Failed to create texture";
+                    }
+                    images[fname]=charText;
+                    std::cout << "MediaManager::read: Loaded and cached " << fname << std::endl;
+                } else {
+                    std::cout << "MediaManager::read: Using cached " << fname << std::endl;
+                }
+                SDL_Texture *result=images[fname];
+                SDL_QueryTexture(result,NULL,NULL,&w,&h);
+                return result;
     }
     ~MediaManager() {
         for (auto entry:images) SDL_DestroyTexture(entry.second);

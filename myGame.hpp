@@ -42,7 +42,7 @@ class MyGame:public Game{
         titleTexture = mm.read(renderer, "images/Title.bmp", titleW, titleH);
         
         //buttons get created here
-        buttons.push_back(new Button(renderer, mm, "images/characters/burger/burger.bmp", 100, 100, 32, 32, 
+        buttons.push_back(new Button(renderer, mm, "images/startButton.bmp", 553, 215, 174, 50, 
             //this is the lambda that is being passed as callback
             //lambda is used so that every button has fully unique "function"
             //what's in brackets is what's being captured, [this] means that the current object (myGame object) is being captured
@@ -50,7 +50,11 @@ class MyGame:public Game{
                     //callback function for button
                     menuOpen = false;
                 }));
-        buttons.push_back(new Button(renderer, mm, "images/characters/burger/burger.bmp", 100, 150, 32, 32));
+        buttons.push_back(new Button(renderer, mm, "images/quitButton.bmp", 553, 290, 174, 50,
+            [this](){
+                    //callback function for button
+                    quit = true;
+                }));
 
     }
 

@@ -13,18 +13,18 @@ class Button {
     std::function<void()> onClick;
     public:
     Button(SDL_Renderer* renderer, MediaManager& mm,
-           const char* bmpName, int newX,
-           int newY, int newW, int newH,
-           //callback is a temporary parameter that excepts a function/lambda
-           //whatever function is passed in constructor to callback gets stored in onClick
-           std::function<void()> callback = nullptr) {
-        dstrect.w = newW;
-        dstrect.h = newH;
-        dstrect.x = newX;
-        dstrect.y = newY;
-        buttonText = mm.read(renderer, bmpName, dstrect.w, dstrect.h);
-        onClick = callback;
-        hovered = false;
+              const char* bmpName, int newX,
+              int newY, int newW, int newH,
+              std::function<void()> callback = nullptr) {
+        std::cerr << "Button constructor called for: " << bmpName << std::endl;
+          dstrect.x = newX;
+          dstrect.y = newY;
+          dstrect.w = newW;
+          dstrect.h = newH;
+          
+          buttonText = mm.read(renderer, bmpName, dstrect.w, dstrect.h);
+          onClick = callback;
+          hovered = false;
     }
     void update(Mouse& mouse){
         if(SDL_HasIntersection(&dstrect, &mouse.point)){
